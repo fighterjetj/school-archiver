@@ -75,9 +75,7 @@ def downloadCourseVids(course_dict, course, folder_path):
 
 # INPUT: A dictionary of dictionaries formatted as {classname: {date1: (video1name, video1link), date2: (video2name, video2link)}}
 # Downloads all the course videos in the dictionary
-def downloadAllCourseVids(
-    all_courses_dict, folder_path="E:/SchoolArchiving/vid_folders"
-):
+def downloadAllCourseVids(all_courses_dict, folder_path="vid_folders"):
     courses = all_courses_dict.keys()
     for course in courses:
         downloadCourseVids(

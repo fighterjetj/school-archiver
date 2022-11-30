@@ -83,7 +83,7 @@ def concatCourseVids(course_dict, course, folder_path):
 # INPUT: A dictionary of dictionaries formatted as {classname: {date1: (video1name, video1link), date2: (video2name, video2link)}}
 # Concatenates all of the video clips into one video file
 # This process takes a while
-def concatAllCourseVids(all_courses_dict, folder_path="E:/SchoolArchiving/vid_folders"):
+def concatAllCourseVids(all_courses_dict, folder_path="vid_folders"):
     courses = all_courses_dict.keys()
     for course in courses:
         concatCourseVids(
