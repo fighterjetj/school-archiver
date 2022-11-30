@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.relative_locator import locate_with
 from downloader import get_videos
 from videoMaker import concatenate_files
-import os, time, getpass, re
+import os, time, re
 
 
 SITE = "https://bruinlearn.ucla.edu"
