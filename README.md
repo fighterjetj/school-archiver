@@ -31,5 +31,5 @@ Tool for archiving course materials (specifically lectures)
 - The video files are saved in folders as mp4 files, formatted as follows:
 - classname/dateoflecture/videofilename.mp4
 
-FUTURE PLANS:
-Add a feature to download Bruinlearn files
+## Future Plans:
+- Add a feature to download Bruinlearn files
