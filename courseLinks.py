@@ -120,7 +120,7 @@ def getCourseVideoLinks(url, driver):
 # INPUT: UCLA username and password
 # RETURNS: A dictionary of dictionaries for each class.  The dictionary for a class links a given date to a tuple - (name of file, download link)
 def getAllCourseVideoLinks(user, passw):
-    os.environ["PATH"] += r"C:/Selenium Drivers"
+    os.environ["PATH"] += WEBDRIVER_LOCATION
     # Set for storing all the video download links
     vid_download_links = set()
     # Function for intercepting requests
