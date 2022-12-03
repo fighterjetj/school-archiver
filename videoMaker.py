@@ -21,6 +21,7 @@ def concatenate_files(
     except FileExistsError:
         # Removes the prior tempfile and just starts over
         shutil.rmtree(tempfile_path)
+        os.makedirs(tempfile_path)
     # Iterating through the video files in the folder
     for i in range(0, num_vid_files, num_concat):
         num_vids_to_concat = min(num_concat, (num_vid_files - i))
