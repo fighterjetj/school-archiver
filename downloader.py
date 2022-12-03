@@ -1,3 +1,4 @@
+from constants import *
 import requests, os, datetime
 
 # Bruinlearn media is stored sequentially, with 0.ts being the first couple seconds of the video
@@ -10,7 +11,7 @@ link = "https://bclive.oid.ucla.edu/2022f-v/mp4:cs35l-1-20221109-27311.mp4/media
 def get_videos(
     start_link,
     source_url="https://bclive.oid.ucla.edu/",
-    file_type=".ts",
+    file_type=CLIP_VIDEO_TYPE,
     video_name=None,
     download_chunks=1024 * 1024,
     parent_dir="vid_folders/",
@@ -26,24 +27,29 @@ def get_videos(
     # Stripping the video number off the end of the link to get a base link to use
     while base_link[-1].isnumeric():
         base_link = base_link[:-1]
-    # If no video name was passed, we generate one using the current datetime
-    if not video_name:
-        video_name = str(datetime.datetime.now()).replace(" ", "")
-        video_name = video_name.replace("-", "")
-    vid_path = os.path.join(parent_dir, video_name)
+    # If no video name was passed, we download the files in the parent directory
+    if video_name:
+        vid_path = os.path.join(parent_dir, video_name)
+    else:
+        vid_path = parent_dir
     # Making a directory to store the video files
+    curr_vid = 0
     try:
         os.makedirs(vid_path)
         print("Made folder for videos")
     except FileExistsError:
-        # We cannot overwrite an existing file
-        raise Exception("Already have a file for that video")
-    curr_vid = 0
-    video_file = requests.get(base_link + str(curr_vid) + ".ts", stream=True)
+        # If the directory already exists, we want to continue where the downloader left off
+        num_clips = 0
+        for file in os.listdir(vid_path):
+            if file.endswith(CLIP_VIDEO_TYPE):
+                num_clips += 1
+        print(f"Already {num_clips} existing clips in {vid_path}")
+        curr_vid = num_clips
+    video_file = requests.get(base_link + str(curr_vid) + CLIP_VIDEO_TYPE, stream=True)
     # As long as the video file exists, we want to download it
     # If the status code is 200, the download was a success
     while video_file.status_code == 200:
-        with open(f"{parent_dir}/{video_name}/{curr_vid}.ts", "wb") as vid:
+        with open(os.path.join(vid_path, str(curr_vid) + CLIP_VIDEO_TYPE), "wb") as vid:
             for chunk in video_file.iter_content(chunk_size=download_chunks):
                 if chunk:
                     vid.write(chunk)
@@ -51,7 +57,9 @@ def get_videos(
         if curr_vid % update_interval == 0:
             print(f"Finished downloading video file #{curr_vid}")
         curr_vid += 1
-        video_file = requests.get(base_link + str(curr_vid) + ".ts", stream=True)
+        video_file = requests.get(
+            base_link + str(curr_vid) + CLIP_VIDEO_TYPE, stream=True
+        )
     print("All videos downloaded!")
 
 
@@ -65,17 +73,15 @@ def downloadCourseVids(course_dict, course, folder_path):
         print(f"Downloading lecture from {date} for the course {course}")
         vid_folder_path = os.path.join(course_folder_path, date)
         # If this folder already exists, we probably already downloaded that lecture
-        if not os.path.exists(vid_folder_path):
-            get_videos(
-                start_link=course_dict[date][1] + ".ts",
-                video_name=course_dict[date][0][:-4],
-                parent_dir=vid_folder_path,
-            )
+        get_videos(
+            start_link=course_dict[date][1] + CLIP_VIDEO_TYPE,
+            parent_dir=vid_folder_path,
+        )
 
 
 # INPUT: A dictionary of dictionaries formatted as {classname: {date1: (video1name, video1link), date2: (video2name, video2link)}}
 # Downloads all the course videos in the dictionary
-def downloadAllCourseVids(all_courses_dict, folder_path="vid_folders"):
+def downloadAllCourseVids(all_courses_dict, folder_path=DEFAULT_FOLDER):
     courses = all_courses_dict.keys()
     for course in courses:
         downloadCourseVids(
@@ -84,4 +90,5 @@ def downloadAllCourseVids(all_courses_dict, folder_path="vid_folders"):
 
 
 if __name__ == "__main__":
-    get_videos(URL)
+    # get_videos(URL)
+    pass

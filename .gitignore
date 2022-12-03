@@ -2,3 +2,6 @@ misc/
 test_vid_folders/
 archiveEnv/
 course_dict.txt
+__pycache__
+*.mp3
+*.mp4

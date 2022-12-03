@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.relative_locator import locate_with
 from downloader import get_videos
 from videoMaker import concatenate_files
+from constants import *
 import os, time, re
 
 
@@ -76,7 +77,7 @@ def getVideoFilename(driver):
     # ID is formatted like https://bclive.oid.ucla.edu/2022f-v/mp4:cs35l-1-20220926-25128.mp4/playlist.m3u8?wowzatokenendtime=1668850874&wowzatokenhash=IM8dvW7jL4TC41oDsh3fDTUwjQguz0WWsNca2r_sBdY=
     # Assume that all files are stored as mp4s, so we search for the format "mp4:.*\.mp4"
     fileMatch = re.search(r"mp4:(.*)\.mp4", vidID)
-    filename = fileMatch.group(1) + ".mp4"
+    filename = fileMatch.group(1) + FINISHED_VIDEO_TYPE
     return filename
 
 
@@ -93,6 +94,7 @@ def getCourseVideoLinks(url, driver):
     # Iterating over the buttons
     for i in range(len(buttons)):
         date = getButtonDate(buttons[i])
+        date = date.replace("/", "-")
         buttons[i].click()
         time.sleep(3)
         filename = getVideoFilename(driver)
@@ -124,12 +126,12 @@ def getAllCourseVideoLinks(user, passw):
     # Function for intercepting requests
     def interceptor(request):
         if "https://bclive.oid.ucla.edu/" in request.url:
-            if request.url[-3:] == ".ts":
-                url = request.url[:-3]
+            if request.url[-len(CLIP_VIDEO_TYPE) :] == CLIP_VIDEO_TYPE:
+                url = request.url[: -len(CLIP_VIDEO_TYPE)]
                 while url[-1].isnumeric():
                     url = url[:-1]
                 vid_download_links.add(url)
-                print(url)
+                # print(url)
 
     driver = webdriver.Chrome()
     driver.request_interceptor = interceptor
@@ -165,10 +167,11 @@ def getAllCourseVideoLinks(user, passw):
             i = 0
             while className[i] != "-" and i < len(className):
                 i += 1
-            className = className[:i]
             # If no class name can be determined, gives it a generic class name
             if i == len(className):
                 className = "class" + str(numClasses)
+            else:
+                className = className[:i]
             final_dict[className] = dict
 
     return final_dict
