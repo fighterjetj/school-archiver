@@ -157,7 +157,9 @@ def getCourseFiles(url, driver):
 def getAllCourseFiles(courseLinks, driver):
     courseFiles = {}
     for link, name in courseLinks:
-        courseFiles[name] = getCourseFiles(f"{link}/files", driver)
+        courseDict = getCourseFiles(f"{link}/files", driver)
+        if len(courseDict) > 0:
+            courseFiles[name] = courseDict
     return courseFiles
 
 

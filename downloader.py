@@ -81,12 +81,48 @@ def downloadCourseVids(course_dict, course, folder_path):
 
 # INPUT: A dictionary of dictionaries formatted as {classname: {date1: (video1name, video1link), date2: (video2name, video2link)}}
 # Downloads all the course videos in the dictionary
-def downloadAllCourseVids(all_courses_dict, folder_path=DEFAULT_FOLDER):
+def downloadAllCourseVids(all_courses_dict, folder_path=VID_FOLDER):
     courses = all_courses_dict.keys()
     for course in courses:
         downloadCourseVids(
             course_dict=all_courses_dict[course], course=course, folder_path=folder_path
         )
+
+
+# INPUT: A dictionary that represents a filetree, with download links for the files and subdictionaries for the subdirectories, and a file path
+# Downloads all the course files in a corresponding tree at the location passed
+def downloadCourseFiles(
+    file_dict,
+    path,
+    download_chunks=1024 * 1024,
+):
+    # If no files, do nothing
+    if len(file_dict) == 0:
+        return
+    try:
+        os.makedirs(path)
+    except FileExistsError:
+        print(f"Folder at path {path} already exists")
+    print(f"Downloading content to f{path}")
+    files = file_dict.keys()
+    for file in files:
+        # Getting rid of any slashes
+        fileName = file.replace("/", "-")
+        fileName = fileName.replace("\\", "-")
+        file_path = os.path.join(path, fileName)
+        file_info = file_dict[file]
+        if type(file_info) == dict:
+            downloadCourseFiles(file_dict[file], file_path)
+        # If the file already exists but it isn't a directory, we don't redownload it
+        elif not os.path.exists(file_path):
+            full_file = requests.get(file_info, stream=True)
+            with open(file_path, "wb") as file_to_write:
+                for chunk in full_file.iter_content(chunk_size=download_chunks):
+                    if chunk:
+                        file_to_write.write(chunk)
+        else:
+            print(f"Already downloaded {file_path}")
+    print(f"Finished downloading content to {path}")
 
 
 if __name__ == "__main__":

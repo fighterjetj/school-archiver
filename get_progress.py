@@ -3,7 +3,7 @@ import os, copy
 
 # INPUT: A dictionary of dictionaries formatted as {classname: {date1: (video1name, video1link), date2: (video2name, video2link)}}, a path to a folder
 # OUTPUT: A dictionary with a course dictionary (formatted like the one passed) for the downloads that need to be completed and the concatenations that need to be completed
-def get_progress(all_courses_dict, folder_path=DEFAULT_FOLDER):
+def get_progress(all_courses_dict, folder_path=VID_FOLDER):
     to_return = copy.deepcopy(all_courses_dict)
     # Iterating through the course_dict to check if any folders don't exist
     for className in all_courses_dict.keys():
