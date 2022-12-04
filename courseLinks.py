@@ -1,3 +1,4 @@
+import getpass
 from seleniumwire import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.relative_locator import locate_with
@@ -36,6 +37,10 @@ def duoMobileLogin(user, passw, driver, site, trust=False):
         noTrustButton.click()
 
 
+# INPUT: Class Name as it appears on bruinlearn
+# OUTPUT: Shortened Class Name for our uses
+
+
 # INPUTS: user = username, passw = password, driver = Selenium webdriver object
 # Returns a list of links to each course currently enrolled in
 def getCourseLinks(user, passw, driver):
@@ -51,7 +56,7 @@ def getCourseLinks(user, passw, driver):
         locate_with(By.TAG_NAME, "ul").below(listHeader)
     )
     links = unorderedList.find_elements(By.TAG_NAME, "a")
-    return [link.get_attribute("href") for link in links]
+    return [(link.get_attribute("href"), link.text) for link in links]
 
 
 # INPUTS: button = Selenium element object referring to a play button on the UCLA Media Reserves page
@@ -111,15 +116,60 @@ def getCourseVideoLinks(url, driver):
     return videos
 
 
+# INPUT: URL to a folder for a class, a Selenium webdriver object
+# OUTPUT: A dictionary of files and subfolders formatted like {filename: download link, foldername: {folder dict}}
+def getCourseFiles(url, driver):
+    driver.get(url)
+    time.sleep(2)
+    # If we cannot access the files page, we can't download the files easily
+    if url != driver.current_url:
+        print(f"Cannot access files for {url}")
+        return {}
+    file_elements = driver.find_elements(By.CLASS_NAME, "ef-item-row")
+    files = {}
+    folders = []
+    for file_element in file_elements:
+        file_name = file_element.find_element(By.CLASS_NAME, "ef-name-col__text").text
+        # Checking if the file name is already taken
+        file_vers = 1
+        file_names = files.keys()
+        # If it is, we generate a new file name
+        if file_name in file_names:
+            file_name = "1" + file_name
+        while file_name in file_names:
+            old_file_len = len(str(file_vers))
+            file_vers += 1
+            file_name = str(file_vers) + file_name[old_file_len:]
+        file_link = file_element.find_element(
+            By.CLASS_NAME, "ef-name-col__link"
+        ).get_attribute("href")
+        # Checking if the file is a folder link
+        if file_link[len(url) : len(url) + 7] == "/folder":
+            folders.append(file_name)
+        files[file_name] = file_link
+    for folder in folders:
+        files[folder] = getCourseFiles(files[folder], driver)
+    return files
+
+
+# INPUT: A list of tuples pairing course links with course names, a Selenium webdriver object
+# OUTPUT: A dictionary of files and subfolders formatted like {filename: download link, foldername: {folder dict}}
+def getAllCourseFiles(courseLinks, driver):
+    courseFiles = {}
+    for link, name in courseLinks:
+        courseFiles[name] = getCourseFiles(f"{link}/files", driver)
+    return courseFiles
+
+
 # Video source
 # https://bclive.oid.ucla.edu/2022f-v/mp4:cs35l-1-20221114-27441.mp4/media_w1256890193_tkd293emF0b2tlbmVuZHRpbWU9MTY2ODgwMjkxMCZ3b3d6YXRva2VuaGFzaD1rd3RJUUlPUjdOU0Q1WXJXdHhVV2N4dFh1SGFMRDVkZVB2Slg1QlFEb1djPQ==_0.ts
 # Class id
 # https://bclive.oid.ucla.edu/2022f-v/mp4:cs35l-1-20221114-27441.mp4/playlist.m3u8?wowzatokenendtime=1668802910&wowzatokenhash=kwtIQIOR7NSD5YrWtxUWcxtXuHaLD5dePvJX5BQDoWc=
 
 
-# INPUT: UCLA username and password
-# RETURNS: A dictionary of dictionaries for each class.  The dictionary for a class links a given date to a tuple - (name of file, download link)
-def getAllCourseVideoLinks(user, passw):
+# INPUT: A list of tuples pairing course links with course names, a Selenium webdriver object
+# OUTPUT: A dictionary of dictionaries for each class.  The dictionary for a class links a given date to a tuple - (name of file, download link)
+def getAllCourseVideoLinks(courseLinks, driver):
     os.environ["PATH"] += WEBDRIVER_LOCATION
     # Set for storing all the video download links
     vid_download_links = set()
@@ -133,15 +183,12 @@ def getAllCourseVideoLinks(user, passw):
                 vid_download_links.add(url)
                 # print(url)
 
-    driver = webdriver.Chrome()
+    if not driver:
+        driver = webdriver.Chrome()
     driver.request_interceptor = interceptor
-    # Allows the page to wait up to 15 seconds for an element to load
-    # Helps with allowing users to get their duo mobile to go through
-    driver.implicitly_wait(15)
-    courseLinks = getCourseLinks(user, passw, driver)
-    videoLinkDicts = []
-    for link in courseLinks:
-        videoLinkDicts.append(getCourseVideoLinks(link, driver))
+    videoLinkDicts = {}
+    for link, name in courseLinks:
+        videoLinkDicts[name] = getCourseVideoLinks(link, driver)
     driver.quit()
     vid_download_links = list(vid_download_links)
     # Function for taking the filename as input and returning the corresponding download link
@@ -152,26 +199,41 @@ def getAllCourseVideoLinks(user, passw):
         return ""
 
     final_dict = {}
-    numClasses = 0
-    for dict in videoLinkDicts:
-        numClasses += 1
-        dictKeys = dict.keys()
+    classes = videoLinkDicts.keys()
+    for className in classes:
+        classDict = videoLinkDicts[className]
+        classKeys = classDict.keys()
         # If there's no videos, don't make a dictionary
-        if len(dictKeys) > 0:
-            className = ""
-            for key in dictKeys:
-                filename = dict[key]
-                className = filename
-                dict[key] = (filename, getVidDownloadLink(filename))
-            # Calculating the class name - the video files are usually formatted as classname-somenumbers
-            i = 0
-            while className[i] != "-" and i < len(className):
-                i += 1
-            # If no class name can be determined, gives it a generic class name
-            if i == len(className):
-                className = "class" + str(numClasses)
-            else:
-                className = className[:i]
-            final_dict[className] = dict
+        if len(classKeys) > 0:
+            for key in classKeys:
+                filename = classDict[key]
+                classDict[key] = (filename, getVidDownloadLink(filename))
+            final_dict[className] = classDict
 
     return final_dict
+
+
+def getAllInfo(user, passw, get_vids, get_files):
+    os.environ["PATH"] += WEBDRIVER_LOCATION
+    driver = webdriver.Chrome()
+    # Allows the page to wait up to 15 seconds for an element to load
+    # Helps with allowing users to get their duo mobile to go through
+    driver.implicitly_wait(15)
+    courseLinks = getCourseLinks(user, passw, driver)
+    videoDict = {}
+    fileDict = {}
+    if get_vids:
+        videoDict = getAllCourseVideoLinks(courseLinks, driver)
+    if get_files:
+        fileDict = getAllCourseFiles(courseLinks, driver)
+    return (videoDict, fileDict)
+
+
+def test():
+    username = input("Username: ")
+    password = getpass.getpass()
+    print(getAllInfo(username, password, False, True))
+
+
+if __name__ == "__main__":
+    test()

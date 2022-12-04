@@ -71,6 +71,10 @@ def concatenate_files(
                     os.remove(os.path.join(tempfile_path, file))
                 except PermissionError:
                     print(f"Couldn't remove file {file}")
+        try:
+            os.path.remove(os.path.join(tempfile_path))
+        except PermissionError:
+            print(f"Couldn't remove {tempfile_path}")
     print("Done")
 
 
