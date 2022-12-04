@@ -189,7 +189,6 @@ def getAllCourseVideoLinks(courseLinks, driver):
     videoLinkDicts = {}
     for link, name in courseLinks:
         videoLinkDicts[name] = getCourseVideoLinks(link, driver)
-    driver.quit()
     vid_download_links = list(vid_download_links)
     # Function for taking the filename as input and returning the corresponding download link
     def getVidDownloadLink(filename):
@@ -226,6 +225,7 @@ def getAllInfo(user, passw, get_vids, get_files):
         videoDict = getAllCourseVideoLinks(courseLinks, driver)
     if get_files:
         fileDict = getAllCourseFiles(courseLinks, driver)
+    driver.quit()
     return (videoDict, fileDict)
 
 
