@@ -21,8 +21,8 @@ Tool for archiving course materials (specifically lectures)
 ## Other Info:
 
 - This process takes a while
-- It is much quicker to just download course files, usually taking around a minute total, including getting the links
-- Try and have a minimum of several hours to run all the code at once
+- Downloading course files currently does not work
+- Try and have a minimum of several hours to download all the course videos at once
 - As long as the Chrome window is open, the program is still compiling its list of links to videos
 - The Chrome window should not be open for more than a few (5-10) minutes
 - Once the window closes, you can use your computer for other things

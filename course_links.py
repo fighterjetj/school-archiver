@@ -2,13 +2,8 @@ import getpass
 from seleniumwire import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.relative_locator import locate_with
-from downloader import get_videos
-from videoMaker import concatenate_files
 from constants import *
-import os, time, re
-
-
-SITE = "https://bruinlearn.ucla.edu"
+import os, time, re, getpass
 
 
 # INPUTS: user = username, passw = password, driver = Selenium webdriver object, site = Site that redirects to the DUO Mobile sign in screen, trust = Trust the browser
@@ -35,10 +30,6 @@ def duoMobileLogin(user, passw, driver, site, trust=False):
             By.XPATH, '//*[@id="dont-trust-browser-button"]'
         )
         noTrustButton.click()
-
-
-# INPUT: Class Name as it appears on bruinlearn
-# OUTPUT: Shortened Class Name for our uses
 
 
 # INPUTS: user = username, passw = password, driver = Selenium webdriver object
@@ -86,6 +77,8 @@ def getVideoFilename(driver):
     return filename
 
 
+# INPUT: Course URL on bruinlearn, Selenium webdriver
+# OUTPUT: Formatted dict of video links for that course
 def getCourseVideoLinks(url, driver):
     # Going to the course UCLA media reserve
     driver.get(url + "/external_tools/871")
@@ -214,12 +207,21 @@ def getAllCourseVideoLinks(courseLinks, driver):
     return final_dict
 
 
-def getAllInfo(user, passw, get_vids, get_files):
+# Function for making a new selenium webdriver
+# Pretty empty right now, modifiable for the future
+def makeDriver(prefs=None):
     os.environ["PATH"] += WEBDRIVER_LOCATION
     driver = webdriver.Chrome()
     # Allows the page to wait up to 15 seconds for an element to load
     # Helps with allowing users to get their duo mobile to go through
     driver.implicitly_wait(15)
+    return driver
+
+
+# INPUT: Username, password, booleans representing if we want to get the video links and the file links
+# OUTPUT: A tuple containing the formatted dict of all the video links and the formatted dict of all file links
+def getAllInfo(user, passw, get_vids, get_files):
+    driver = makeDriver()
     courseLinks = getCourseLinks(user, passw, driver)
     videoDict = {}
     fileDict = {}
@@ -231,11 +233,5 @@ def getAllInfo(user, passw, get_vids, get_files):
     return (videoDict, fileDict)
 
 
-def test():
-    username = input("Username: ")
-    password = getpass.getpass()
-    print(getAllInfo(username, password, False, True))
-
-
 if __name__ == "__main__":
-    test()
+    pass

@@ -1,12 +1,13 @@
+from course_links import duoMobileLogin, makeDriver
 from constants import *
-import requests, os, datetime
+import requests, os, datetime, getpass, time
 
 # Bruinlearn media is stored sequentially, with 0.ts being the first couple seconds of the video
 URL = "https://bclive.oid.ucla.edu/2022f-v/mp4:cs35l-1-20221109-27311.mp4/media_w1066734084_tkd293emF0b2tlbmVuZHRpbWU9MTY2ODY4MDcyOSZ3b3d6YXRva2VuaGFzaD12RnNXaUNQbTNYejRyaldHcXhzT3hDLXI5OXh1RGxiOUJUcjYyalY4V1RrPQ==_0.ts"
 link = "https://bclive.oid.ucla.edu/2022f-v/mp4:cs35l-1-20221109-27311.mp4/media_w1066734084_tkd293emF0b2tlbmVuZHRpbWU9MTY2ODY4MDcyOSZ3b3d6YXRva2VuaGFzaD12RnNXaUNQbTNYejRyaldHcXhzT3hDLXI5OXh1RGxiOUJUcjYyalY4V1RrPQ==_"
 
-# INPUT: A link to any video clip from a lecture, the source url that the video comes from, the filetype of these videos, the name of the video
-# INPUT (cont'd): the byte size for writing the video clips, the parent directory to store all the videos in, and after how many videos you want to get an update
+# INPUT: A link to any video clip from a lecture, the source url that the video comes from, the filetype of these videos, the name of the video,
+# the byte size for writing the video clips, the parent directory to store all the videos in, and after how many videos you want to get an update
 # Downloads all the video clips for a given lecture and saves them in a file
 def get_videos(
     start_link,
@@ -89,42 +90,5 @@ def downloadAllCourseVids(all_courses_dict, folder_path=VID_FOLDER):
         )
 
 
-# INPUT: A dictionary that represents a filetree, with download links for the files and subdictionaries for the subdirectories, and a file path
-# Downloads all the course files in a corresponding tree at the location passed
-def downloadCourseFiles(
-    file_dict,
-    path,
-    download_chunks=1024 * 1024,
-):
-    # If no files, do nothing
-    if len(file_dict) == 0:
-        return
-    try:
-        os.makedirs(path)
-    except FileExistsError:
-        print(f"Folder at path {path} already exists")
-    print(f"Downloading content to f{path}")
-    files = file_dict.keys()
-    for file in files:
-        # Getting rid of any slashes
-        fileName = file.replace("/", "-")
-        fileName = fileName.replace("\\", "-")
-        file_path = os.path.join(path, fileName)
-        file_info = file_dict[file]
-        if type(file_info) == dict:
-            downloadCourseFiles(file_dict[file], file_path)
-        # If the file already exists but it isn't a directory, we don't redownload it
-        elif not os.path.exists(file_path):
-            full_file = requests.get(file_info, stream=True)
-            with open(file_path, "wb") as file_to_write:
-                for chunk in full_file.iter_content(chunk_size=download_chunks):
-                    if chunk:
-                        file_to_write.write(chunk)
-        else:
-            print(f"Already downloaded {file_path}")
-    print(f"Finished downloading content to {path}")
-
-
 if __name__ == "__main__":
-    # get_videos(URL)
     pass
