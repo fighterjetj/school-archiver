@@ -2,6 +2,8 @@
 
 Tool for archiving course materials (specifically lectures)
 
+**File downloading functionality is currently not working.  It will be working soon.**
+
 ## Running the program:
 
 - Create a virtual environment with the python packages in requirements.txt
